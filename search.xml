@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title><![CDATA[浅析Vue响应式原理]]></title>
+    <url>%2F2019%2F05%2F20%2Fanalysis-of-vue-response-principle%2F</url>
+    <content type="text"><![CDATA[Vue的双向绑定基本原理是Obeject.defineProperty()劫持对象属性来实现修改数据改变视图，修改视图改变数据。那么具体是如何在数据和视图建立起关联的呢？ 通过查看Vue源码我们了解到Vue内部实现了Observer Watcher Compile Dep 四个类，我们理一下逻辑这四个类是如何关联工作的呢？我们先简单介绍一下这四个类是干什么的。1、Observer：Observer通过Obeject.defineProperty劫持data的每个属性，这样我们就能监听到对象属性的setter和getter2、Compile：Compile是用来解析模板中的插值和指令3、Watcher：Watcher是用来当数据发生变化时执行更新模板的方法4、Dep：依赖收集器，主要是用来收集Watcher的，当数据变化时会通知收集到的Watcher进行更新 了解了上面四个类的简单作用之后，我们来梳理一下它们是如何工作的。下面是一个简单的例子1234567891011121314&lt;div id="app"&gt; &#123;&#123;text&#125;&#125; &lt;input v-model="text"&gt;&lt;/div&gt;&lt;script&gt; const vm = new Vue(&#123; el:'#app', data:&#123; text:1 &#125; &#125;); vm.text = 2;&lt;/script&gt; 1、new Vue的时候内部会进行一些初始化，其中最重要的就是Observer通过Obeject.defineProperty劫持data对象，这个时候就能监听到对象属性的变化了2、Compile解析模板也就是#app里面的内容，解析到插值，此时将其替换为实际值，同时实例化一个Watcher来保存更新操作3、上一步我们可以看到Watcher被实例化了，那么实例化的时候做了什么操作呢。 1.存储Compile中实例化时传递过来的更新方法。并且声明一个update方法来调用更新。 2.Dep.target设置为this也就是告诉依赖收集器当前要收集的Watcher对象。 3.然后访问一次data.text触发getter，在getter中判断Dep.target如果存在的话则将其添加到Dep的subs中 4.当data.text被修改的时候则会触发setter，Dep就会遍历subs调用Watcher的update方法进行视图更新 总结，我们可以理解为每个属性都有一个发布者Dep用来收集订阅者也就是Watcher，Compile在进行模板解析的时候如果匹配到相应的插值或者指令则会创建一个Watcher并且将视图更新方法通过回调函数的方式存入Watcher，而Watcher则可以通过update方法来调用这个回调函数。紧接着Watcher会将自己也就是this存入全局的Dep.target中并且访问一次数据对象的属性来触发getter，这个时候Dep就会把Watcher存起来，也就是对象属性拥有了一个订阅者Watcher。当发生赋值操作的时候会触发对象属性的setter来调用这个对象属性拥有的发布者也就是Dep，通过遍历Dep的subs也就是订阅者列表来调用每一个Watcher的update方法，达到修改数据更新视图的目的。那么通过修改视图达到改变数据是如何实现的呢，其实简单来说也是Compile解析模板发现v-model，然后监听该节点的input事件，在事件触发时修改对象属性，这样就会触发对象属性的setter，如果模板上有在其他地方绑定这个属性那么就又回到我们上面的说的，解析模板给属性的Dep添加Watcher，然后当更新属性会触发Watcher的update这么一个流程中了。]]></content>
+      <tags>
+        <tag>Vue</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Nginx+Php-fpm运行原理详解]]></title>
+    <url>%2F2018%2F12%2F13%2Fdetailed-operating-principle-of-nginx%2Bphp-fpm%2F</url>
+    <content type="text"><![CDATA[Nginx是什么？ Nginx (engine x) 是一个高性能的HTTP和反向代理服务，也是一个IMAP/POP3/SMTP服务。Nginx是由伊戈尔·赛索耶夫为俄罗斯访问量第二的Rambler.ru站点（俄文：Рамблер）开发的，第一个公开版本0.1.0发布于2004年10月4日。其将源代码以类BSD许可证的形式发布，因它的稳定性、丰富的功能集、示例配置文件和低系统资源的消耗而闻名。2011年6月1日，nginx 1.0.4发布。Nginx是一款轻量级的Web 服务器/反向代理服务器及电子邮件（IMAP/POP3）代理服务器，并在一个BSD-like 协议下发行。其特点是占有内存少，并发能力强，事实上nginx的并发能力确实在同类型的网页服务器中表现较好，中国大陆使用nginx网站用户有：百度、京东、新浪、网易、腾讯、淘宝等。来自百度百科 PHP-FPM是什么？了解PHP-FPM前我们需要先知道cgi、php-cgi、fast-cgi CGI 为了解决不同的语言解释器(如php、python解释器)与webserver的通信，于是出现了cgi协议。只要你按照cgi协议去编写程序，就能实现语言解释器与webwerver的通信。如php-cgi程序。 CGI 是Web 服务器运行时外部程序的规范,按CGI 编写的程序可以扩展服务器功能。CGI 应用程序能与浏览器进行交互,还可通过数据库API 与数据库服务器等外部数据源进行通信,从数据库服务器中获取数据。格式化为HTML文档后，发送给浏览器，也可以将从浏览器获得的数据放到数据库中。几乎所有服务器都支持CGI,可用任何语言编写CGI,包括流行的C、C ++、VB 和Delphi 等。CGI 分为标准CGI 和间接CGI两种。标准CGI 使用命令行参数或环境变量表示服务器的详细请求，服务器与浏览器通信采用标准输入输出方式。间接CGI 又称缓冲CGI,在CGI 程序和CGI 接口之间插入一个缓冲程序，缓冲程序与CGI 接口间用标准输入输出进行通信。来自百度百科 FastCGI有了cgi协议，解决了php解释器与webserver通信的问题，webserver终于可以处理动态语言了。但是，webserver每收到一个请求，都会去fork一个cgi进程，请求结束再kill掉这个进程。这样有10000个请求，就需要fork、kill php-cgi进程10000次。于是，出现了cgi的改良版本，fast-cgi。 fast-cgi 是cgi的升级版本，FastCGI像是一个常驻(long-live)型的CGI，它可以一直执行着，只要激活后，不会每次都要花费时间去fork一 次。PHP使用PHP-FPM(FastCGI Process Manager)，全称PHP FastCGI进程管理器进行管理。 FastCGI的工作原理 1、Web Server启动时载入FastCGI进程管理器(IIS ISAPI或Apache Module) 2、FastCGI进程管理器自身初始化，启动多个CGI解释器进程(可见多个php-cgi)并等待来自Web Server的连接。 3、当客户端请求到达Web Server时，FastCGI进程管理器选择并连接到一个CGI解释器。Web server将CGI环境变量和标准输入发送到FastCGI子进程php-cgi。 4、 FastCGI子进程完成处理后将标准输出和错误信息从同一连接返回Web Server。当FastCGI子进程关闭连接时，请求便告处理完成。FastCGI子进程接着等待并处理来自FastCGI进程管理器(运行在Web Server中)的下一个连接。 在CGI模式中，php-cgi在此便退出了。 在上述情况中，你可以想象CGI通常有多慢。每一个Web请求PHP都必须重新解析php.ini、重新载入全部扩展并重初始化全部数据结构。使用FastCGI，所有这些都只在进程启&gt;动时发生一次。一个额外的 好处是，持续数据库连接(Persistent database connection)可以工作。 PHP-CGIPHP-CGI是早期php官方出品的FastCGI管理器，也是用来解释PHP脚本的 PHP-FPM是什么据说是修改了php.ini配置文件后，没办法平滑重启，所以就诞生了php-fpm PHP-FPM(FastCGI Process Manager：FastCGI进程管理器)是一个实现了Fastcgi的程序，并且提供进程管理的功能。进程包括master进程和worker进程。master进程只有一个，负责监听端口，接受来自web server的请求。worker进程一般会有多个，每个进程中会嵌入一个PHP解析器，进程PHP代码的处理。 PHP-FPM(FastCGI Process Manager：FastCGI进程管理器)是一个PHPFastCGI管理器，对于PHP 5.3.3之前的php来说，是一个补丁包 [1] ，旨在将FastCGI进程管理整合进PHP包中。如果你使用的是PHP5.3.3之前的PHP的话，就必须将它patch到你的PHP源代码中，在编译安装PHP后才可以使用。相对Spawn-FCGI，PHP-FPM在CPU和内存方面的控制都更胜一筹，而且前者很容易崩溃，必须用crontab进行监控，而PHP-FPM则没有这种烦恼。来自百度百科 Nginx与Php-fpm结合我们可以看到NGINX的虚拟主机配置文件 123456789101112131415server &#123; listen 80; #监听80端口，接收http请求 server_name www.example.com; #就是网站地址 root /usr/local/etc/nginx/www/huxintong_admin; # 准备存放代码工程的路径 #路由到网站根目录www.example.com时候的处理 location / &#123; index index.php; #跳转到www.example.com/index.php &#125; #当请求网站下php文件的时候，反向代理到php-fpm location ~ \.php$ &#123; fastcgi_pass 127.0.0.1:9000;#表示nginx通过fastcgi协议将用户请求的资源发给127.0.0.1:9000进行解析，这里的nginx和php脚本解析服务器是在同一台机器上，所以127.0.0.1:9000表示的就是本地的php脚本解析服务器。 include fastcgi_params;#加载fastcgi参数，可以理解为nginx会通过fastcgi协议处理本次请求 &#125;&#125; 当我们访问www.example.com的时候，处理流程是这样的： 12345678910111213141516171819202122232425 www.example.com | | Nginx | |路由到www.example.com/index.php | |加载FastCgi模块 | |Nginx通过FastCgi协议将请求转发到127.0.0.1:9000 | |PHP-FPM监听127.0.0.1:9000 | |PHP-FPM接收到请求，分配进程处理PHP | |处理完成后返回结果NGINX | |Nginx通过http协议响应给客户端 总结当Web Server收到 index.php 这个请求后，会启动对应的 CGI 程序，这里就是PHP的解析器。接下来PHP解析器会解析php.ini文件，初始化执行环境，然后处理请求，再以规定CGI规定的格式返回处理后的结果，退出进程，Web server再把结果返回给浏览器。这就是一个完整的动态PHP Web访问流程，接下来再引出这些概念，就好理解多了， CGI：是 Web Server 与 Web Application 之间数据交换的一种协议。 FastCGI：同 CGI，是一种通信协议，但比 CGI 在效率上做了一些优化。同样，SCGI 协议与 FastCGI 类似。 PHP-CGI：是 PHP （Web Application）对 Web Server 提供的 CGI协议的接口程序。 PHP-FPM：是 PHP（Web Application）对 Web Server 提供的 FastCGI 协议的接口程序，额外还提供了相对智能一些任务管理。]]></content>
+      <categories>
+        <category>PHP</category>
+      </categories>
+      <tags>
+        <tag>Nginx</tag>
+        <tag>PHP</tag>
+        <tag>PHP-FPM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[JS单例（ES6）]]></title>
+    <url>%2F2018%2F12%2F12%2Fjs-singleton-(es6)%2F</url>
+    <content type="text"><![CDATA[ES6引入class和constructor来创建对象，下面我们使用ES6实现单例模式使用static关键字定义静态方法 class Singleton { constructor(name) { this.name = name; this.instance = null; } static getInstance(name) { if(!this.instance) { this.instance = new Singleton(name); } return this.instance; } } const singleton1 = Singleton.getInstance('singleton1'); const singleton2 = Singleton.getInstance('singleton2'); console.log(singleton1 === singleton2); //true JS中没有私有变量，所以我们借助Symbol const name1 = Symbol('name1'); class Singleton { constructor(name) { this.name = name; this[name1] = name; this.instance = null; } static getInstance(name) { if(!this.instance) { this.instance = new Singleton(name); } return this.instance; } } const singleton1 = Singleton.getInstance('singleton1'); console.log(singleton1.name); //singleton1 console.log(singleton1.name1); //undefined]]></content>
+      <categories>
+        <category>JavaScript</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+        <tag>ES6</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[JS中各类型值对应布尔值]]></title>
+    <url>%2F2018%2F12%2F06%2Fboolean-values-corresponding-to-various-types-of-values-in-js%2F</url>
+    <content type="text"><![CDATA[Boolean 对象描述 在 JavaScript 中，布尔值是一种基本的数据类型。Boolean 对象是一个将布尔值打包的布尔对象。Boolean 对象主要用于提供将布尔值转换成字符串的 toString() 方法。 当调用 toString() 方法将布尔值转换成字符串时（通常是由 JavaScript 隐式地调用），JavaScript 会内在地将这个布尔值转换成一个临时的 Boolean对象，然后调用这个对象的 toString() 方法。 使用Boolean包装函数123456789101112Boolean(undefined) // falseBoolean(null) // falseBoolean(0) // falseBoolean('') // falseBoolean(NaN) // falseBoolean(1) // trueBoolean('false') // trueBoolean([]) // trueBoolean(&#123;&#125;) // trueBoolean(function () &#123;&#125;) // trueBoolean(/foo/) // true 使用双重的否运算符(!!)123456789101112!!undefined // false!!null // false!!0 // false!!'' // false!!NaN // false!!1 // true!!'false' // true!![] // true!!&#123;&#125; // true!!function()&#123;&#125; // true!!/foo/ // true 注意，对于一些特殊值，Boolean对象前面加不加new，会得到完全相反的结果，必须小心123456789101112131415if (Boolean(false)) &#123; console.log('true');&#125; // 无输出if (new Boolean(false)) &#123; console.log('true');&#125; // trueif (Boolean(null)) &#123; console.log('true');&#125; // 无输出if (new Boolean(null)) &#123; console.log('true');&#125; // true 参考文章Boolean 对象]]></content>
+      <categories>
+        <category>JavaScript</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Object.defineProperty 简单实现数据双向绑定]]></title>
+    <url>%2F2018%2F12%2F06%2Fobject.-defneproperty-simply-implements-bidirectional-binding-of-data%2F</url>
+    <content type="text"><![CDATA[Object.defineProperty() 方法会直接在一个对象上定义一个新属性，或者修改一个对象的现有属性， 并返回这个对象。 描述 该方法允许精确添加或修改对象的属性。通过赋值操作添加的普通属性是可枚举的，能够在属性枚举期间呈现出来（for…in 或 Object.keys 方法）， 这些属性的值可以被改变，也可以被删除。这个方法允许修改默认的额外选项（或配置）。默认情况下，使用 Object.defineProperty() 添加的属性值是不可修改的。 html12&lt;input id='input'&gt;&lt;p id='text'&gt;&lt;/p&gt; JS1234567891011121314151617var data = &#123;text:''&#125;var input = document.querySelector("#input");var text = document.querySelector("#text");Object.defineProperty(data, "text", &#123; get: function()&#123; return input.value; &#125;, set: function(value)&#123; input.value = value; text.innerText = value; &#125;&#125;);input.onkeyup = function (e) &#123; data.text = e.target.value&#125; 效果如下图. 参考文章Object.defineProperty() - JavaScript | MDN]]></content>
+      <categories>
+        <category>JavaScript</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[搭建自己的ngrok内网穿透服务]]></title>
+    <url>%2F2018%2F11%2F02%2Fbuild-your-own-ngrok-intranet-penetration-service%2F</url>
+    <content type="text"><![CDATA[为什么需要内网穿透很实用的一个场景，我们在进行微信公众号开发的时候，进行用户授权、调用JSDDK、处理公众号消息的时候需要一个可以访问的域名，如果每次都往服务器上传很麻烦，为了解决问题我们可以使用内网转发工具。比如国外的https://ngrok.com/，国内的https://ngrok.cc/、echosite、https://natapp.cn 搭建自己的内网穿透上面的这些使用起来有诸多限制，例如：不稳定，收费，不能自定义域名等等，所以决定自己用ngrok撸一个。首先准备一个域名，将域名解析到自己的服务器，在域名解析中添加两条A记录your-domain.com和*.ngrok.your-domain.com 开始安装GO安装123456789101112131415#下载 Go 语言文件#64位wget https://www.golangtc.com/static/go/1.9.2/go1.9.2.linux-amd64.tar.gz#32位wget https://www.golangtc.com/static/go/1.9.2/go1.9.2.linux-386.tar.gz#解压tar -xzf go1.9.2.linux-amd64.tar.gz -C /usr/local#增加环境变量vim /etc/profileexport PATH=$PATH:/usr/local/go/bin#测试go version 安装ngrok1234567891011121314151617181920212223242526272829303132333435#下载ngrok源码git clone https://github.com/inconshreveable/ngrok.git ngrokcd ngrok#生成证书openssl genrsa -out rootCA.key 2048openssl req -x509 -new -nodes -key rootCA.key -subj "/CN=ngrok.your-domain.com" -days 5000 -out rootCA.pemopenssl genrsa -out device.key 2048openssl req -new -key device.key -subj "/CN=ngrok.your-domain.com" -out device.csropenssl x509 -req -in device.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out device.crt -days 5000#替换证书cp rootCA.pem assets/client/tls/ngrokroot.crtcp device.crt assets/server/tls/snakeoil.crtcp device.key assets/server/tls/snakeoil.key#生成ngrok的服务端和客户端，32位的GOARCH等于386，64位的是amd64自行替换，mac段的GOOS是darwin#linux服务端GOOS=linux GOARCH=amd64 make release-server#win客户端GOOS=windows GOARCH=amd64 make release-client#现在进入bin目录，ngrokd就是服务端，windows_amd64里面的ngrok就是客户端#后台启动服务端ngrok，这里手动设置访问端口，默认使用80和443端口nohup bin/ngrokd -domain="ngrok.your-domain.com" -httpAddr=":8777" -httpsAddr=":8778" &gt; /dev/null 2&gt;&amp;1 &amp;#将客户端ngrok.exe下载到windows电脑上，在ngrok.exe的同级目录新建`ngrok.cfg`文件输入以下内容server_addr: "ngrok.your-domain.com:4443"trust_host_root_certs: false#然后启动客户端./ngrok -subdomain example -config=ngrok.cfg 80#这样你就将example.ngrok.your-domain.com:8777映射到了本地的80端口 设置nginx反向代理上面我们已经成功搭建好了ngrok，但是在访问的时候得加上端口号，所以我们使用nginx进行反向代理，新建nginx配置文件，输入一下内容 12345678910111213141516upstream ngrok &#123; server 127.0.0.1:8777; # 此处端口要跟 启动服务端ngrok 时指定的端口一致 keepalive 64;&#125;server &#123; listen 80; server_name *.ngrok.your-domain.com; location / &#123; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header Host $http_host:8777; # 此处端口要跟 启动服务端ngrok 时指定的端口一致 proxy_set_header X-Nginx-Proxy true; proxy_set_header Connection ""; proxy_pass http://ngrok; &#125;&#125; 重启nginx1service nginx reload 这个时候我们就只需要访问example.ngrok.your-domain.com就可以了，nginx会自动帮我们转发到example.ngrok.your-domain.com:8777上 参考文章https://blog.csdn.net/truong/article/details/73250683http://aevitx.com/2016/03/31/ngrok/#%E7%BC%96%E8%AF%91linux%E7%AB%AF%E7%89%88%E6%9C%AC]]></content>
+      <categories>
+        <category>Ngrok</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>Ngrok</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Git忽略已经过的本地文件并删除线上已经提交的文件]]></title>
+    <url>%2F2018%2F10%2F26%2Fgit-ignores-local-files-that-have-passed-and-deletes-files-submitted-online%2F</url>
+    <content type="text"><![CDATA[在根目录添加.gitignore忽略文件，并且设置要忽略的文件或者目录，当要忽略的文件以及提交时 删除本地缓存中的文件 1git rm -r --cached 文件名 将删除的文件添加到本地暂存区 1git add . 将本地变更信息提交到本地仓库 1git commit -am '变更信息' 推送到远程仓库 1git push]]></content>
+      <categories>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[发布一个属于自己的npm包]]></title>
+    <url>%2F2018%2F10%2F26%2Fpublish-your-own-npm-package%2F</url>
+    <content type="text"><![CDATA[发布一个属于自己的npm包 注册NPM 首先登陆npm官网注册一个账号，其中Username就是自己的登陆账号也是用于后面命名包，例如我的包@defy/wx-jssdk 初始化项目 执行初始化命令，会让你填选一些信息，一路回车下去就好，后续可以在pkg里面改 1npm init 修改项目结构 在根目录创建文件夹src，并且新建index.js123456var hello = &#123; say: function () &#123; console.log('hello'); &#125;&#125;module.exports = hello; 修改package.json12345&#123; "name": "@你的username/包名", "version": "0.0.1", "main": "src/index.js",&#125; 准备发布1234567#执行登录，会让你输入用户名密码和邮箱，显示Logged in as xxxx on https://registry.npmjs.org/.就是成功了npm login#执行发布命令因为包名加了scope所以手动设置publicnpm publish --access=public#发布成功会收到邮件，也会显示包名+版本号，记住每次发布版本号必须大于上一次发布的版本号 下载安装你的npm包1npm install @你的username/包名 -S 结束]]></content>
+      <categories>
+        <category>NPM</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+        <tag>NPM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[vue中的跨域代理]]></title>
+    <url>%2F2018%2F10%2F15%2Fcross-domain-proxy-in-vue%2F</url>
+    <content type="text"><![CDATA[vue中的跨域代理 通常我们使用npm run dev运行的是在localhost:8080下面运行的,如果api接口没有对跨域进行设置的话那么此时浏览器同源策略会告诉你无法请求接口在vue-cli2.0创建的项目中我们可以在config文件夹下的index.js配置文件中对proxyTable进行如下配置 12345678dev: &#123; proxyTable: &#123; '/api': &#123; //将www.exaple.com印射为/apis target: 'https://www.exaple.com', // 接口域名 changeOrigin: true, //是否跨域 &#125; &#125; &#125; 在vue-cli3.0创建的项目中我们可以在根目录创建vue.config.js进行如下配置 12345678910module.exports = &#123; devServer: &#123; proxy: &#123; '/api': &#123; target: 'https://www.exaple.com', changeOrigin: true &#125; &#125; &#125;&#125; 那么这个时候使用axios或者其他插件进行ajax请求时，只需要请求localhost:8080/api就会自动转发到https://www.exaple.com]]></content>
+      <categories>
+        <category>Vue</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+        <tag>Vue</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[git reset --hard误操作导致文件丢失]]></title>
+    <url>%2F2018%2F09%2F18%2Fgit-reset----file-loss-due-to-hard-misoperation%2F</url>
+    <content type="text"><![CDATA[解决已经add，但是没有commit，直接运行git reset –hard xxxxx的情况(因为据说没有add直接返回版本就是死了，而且都硬了的那种) 执行 git fsck –lost-found； 在.git/lost-found目录下找找看有没有你丢失的文件； 有的话复制出来，如果是文本，直接改成正确扩展名，你就笑了； 没有的话，就再去Google吧； 相关文章关于git reset –hard导致文件丢失的血的教训]]></content>
+      <categories>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[JS将日期转换Date对象时的问题]]></title>
+    <url>%2F2018%2F09%2F17%2Fproblems-with-js-converting-date-objects%2F</url>
+    <content type="text"><![CDATA[二话不说上代码 在ES5之中，如果日期采用连词线（-）格式分隔，且具有前导0，JavaScript会认为这是一个ISO格式的日期字符串，导致返回的时间是以UTC时区计算的 1234567891011121314 new Date('2014-01-01') // Wed Jan 01 2014 08:00:00 GMT+0800 (CST) new Date('2014-1-1') // Wed Jan 01 2014 00:00:00 GMT+0800 (CST)``` 上面代码中，日期字符串有没有前导0，返回的结果是不一样的。如果没有前导0，JavaScript引擎假设用户处于本地时区，所以本例返回0点0分。如果有前导0（即如果你以ISO格式表示日期），就假设用户处于格林尼治国际标准时的时区，所以返回8点0分。但是，ES6改变了这种做法，规定凡是没有指定时区的日期字符串，一律认定用户处于本地时区。 问题解决``` javascript new Date('2014/01/01') // Wed Jan 01 2014 00:00:00 GMT+0800 (CST) new Date('2014/1/1') // Wed Jan 01 2014 00:00:00 GMT+0800 (CST)]]></content>
+      <categories>
+        <category>JavaScript</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[vue浏览器返回监听]]></title>
+    <url>%2F2018%2F09%2F11%2Fvue-browser-returns-to-monitor%2F</url>
+    <content type="text"><![CDATA[1. 挂载完成后，判断浏览器是否支持popstate12345678910111213 mounted()&#123; if (window.history &amp;&amp; window.history.pushState) &#123; history.pushState(null, null, document.URL); window.addEventListener('popstate', this.goBack, false); &#125; &#125;``` ### 2\. 页面销毁时，取消监听。否则其他vue路由页面也会被监听``` javascript destroyed()&#123; window.removeEventListener('popstate', this.goBack, false); &#125; 3、将监听操作写在methods里面，removeEventListener取消监听内容必须跟开启监听保持一致，所以函数拿到methods里面写123456methods:&#123; goBack()&#123; this.$router.replace(&#123;path: '/'&#125;); //replace替换原路由，作用是避免回退死循环 &#125;&#125;]]></content>
+      <categories>
+        <category>Vue</category>
+      </categories>
+      <tags>
+        <tag>JavaScript</tag>
+        <tag>Vue</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Linux环境安装GitLab]]></title>
+    <url>%2F2018%2F09%2F05%2Finstallation-of-gitlab-in-linux-environment%2F</url>
+    <content type="text"><![CDATA[安装依赖12345#配置系统防火墙,把HTTP和SSH端口开放.sudo yum install curl openssh-server postfix croniesudo service postfix startsudo lokkit -s http -s sshsudo chkconfig postfix on 下载安装GitLab包GitLab下载地址:https://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/yum/el612wget https://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/yum/el6/gitlab-ce-11.1.6-ce.0.el6.x86_64.rpmrpm -Uvh gitlab-ce-11.1.6-ce.0.el6.x86_64.rpm 修改gitlab配置文件指定服务器ip和自定义端口1234567891011121314151617181920vim /etc/gitlab/gitlab.rb#禁用gitlab附带的nginxnginx['enable'] = falsegitlab_workhorse['enable'] = truegitlab_workhorse['listen_network'] = "tcp"#设置gitlab监听端口gitlab_workhorse['listen_addr'] = "127.0.0.1:8181"#配置邮件gitlab_rails['gitlab_email_from'] = 'xxxxx@qq.com'gitlab_rails['smtp_enable'] = truegitlab_rails['smtp_address'] = "smtp.qq.com"gitlab_rails['smtp_port'] = 465gitlab_rails['smtp_user_name'] = "xxxxx@qq.com"gitlab_rails['smtp_password'] = "xxxxx"gitlab_rails['smtp_domain'] = "smtp.qq.com"gitlab_rails['smtp_authentication'] = "login"gitlab_rails['smtp_enable_starttls_auto'] = truegitlab_rails['smtp_tls'] = true 创建nginx配置文件1234567891011121314151617181920212223242526272829303132333435363738vim /etc/nginx/conf.d/gitlab.xxx.com.confupstream gitlab-workhorse &#123; server 127.0.0.1:8181; #根据实际情况修改&#125;server &#123; listen 80; listen [::]:80 default_server; server_name gitlab.xxx.com; ## 修改成自己的域名； server_tokens off; ## Don't show the nginx version number, a security best practice root /opt/gitlab/embedded/service/gitlab-rails/public; ## See app/controllers/application_controller.rb for headers set ## Individual nginx logs for this GitLab vhost ## access_log /home/wwwlogs/gitlab_access.log; # 根据实际情况修改 ## error_log /home/wwwlogs/gitlab_error.log; # 根据实际情况修改 location / &#123; client_max_body_size 0; gzip off; ## https://github.com/gitlabhq/gitlabhq/issues/694 ## Some requests take more than 30 seconds. proxy_read_timeout 300; proxy_connect_timeout 300; proxy_redirect off; proxy_http_version 1.1; proxy_set_header Host $http_host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; proxy_pass http://gitlab-workhorse; &#125;&#125; 重载配置12345678#重载配置sudo gitlab-ctl reconfigure#启动gitlab-ctl start#停止gitlab-ctl stop#重启gitlab-ctl restart 打开浏览器访问gitlab.xxx.com]]></content>
+      <categories>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>GitLab</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[MySQL 常用30种SQL查询语句优化方法]]></title>
+    <url>%2F2018%2F09%2F03%2Fmysql-query-statement-optimization-method-for-30-commonly-used-sql-queries%2F</url>
+    <content type="text"><![CDATA[1、应尽量避免在 where 子句中使用!=或&lt;&gt;操作符，否则将引擎放弃使用索引而进行全表扫描。 2、对查询进行优化，应尽量避免全表扫描，首先应考虑在 where 及 order by 涉及的列上建立索引。 3、应尽量避免在 where 子句中对字段进行 null 值判断，否则将导致引擎放弃使用索引而进行全表扫描。如：1234567891011121314151617181920212223242526272829 select id from t where num is null --可以在num上设置默认值0，确保表中num列没有null值，然后这样查询： select id from t where num=0``` 4、尽量避免在 where 子句中使用 or 来连接条件，否则将导致引擎放弃使用索引而进行全表扫描，如：```bash select id from t where num=10 or num=20 --可以这样查询： select id from t where num=10 union all select id from t where num=20``` 5、下面的查询也将导致全表扫描：(不能前置百分号)```bash select id from t where name like ‘%c%’ --下面走索引 select id from t where name like ‘c%’ --若要提高效率，可以考虑全文检索。 6、in 和 not in 也要慎用，否则会导致全表扫描，如：12345select id from t where num in(1,2,3)--对于连续的数值，能用 between 就不要用 in 了：select id from t where num between 1 and 3 7、如果在 where 子句中使用参数，也会导致全表扫描。因为SQL只有在运行时才会解析局部变量，但优化程序不能将访问计划的选择推迟到运行时；它必须在编译时进行选择。然 而，如果在编译时建立访问计划，变量的值还是未知的，因而无法作为索引选择的输入项。如下面语句将进行全表扫描：123456789101112131415161718192021222324252627282930313233343536373839404142434445 select id from t where num=@num --可以改为强制查询使用索引： select id from t with(index(索引名)) where num=@num``` 8、应尽量避免在 where 子句中对字段进行表达式操作，这将导致引擎放弃使用索引而进行全表扫描。如：```bash select id from t where num/2=100 --应改为: select id from t where num=100*2``` 9、应尽量避免在where子句中对字段进行函数操作，这将导致引擎放弃使用索引而进行全表扫描。如：```bash select id from t where substring(name,1,3)=’abc’ --name以abc开头的id select id from t where datediff(day,createdate,’2005-11-30′)=0 –’2005-11-30′ --生成的id --应改为: select id from t where name like ‘abc%’ select id from t where createdate&gt;=’2005-11-30′ and createdate&lt;’2005-12-1′``` 10、不要在 where 子句中的“=”左边进行函数、算术运算或其他表达式运算，否则系统将可能无法正确使用索引。 11、在使用索引字段作为条件时，如果该索引是复合索引，那么必须使用到该索引中的第一个字段作为条件时才能保证系统使用该索引，否则该索引将不会被使 用，并且应尽可能的让字段顺序与索引顺序相一致。 12、不要写一些没有意义的查询，如需要生成一个空表结构：```bash select col1,col2 into #t from t where 1=0 --这类代码不会返回任何结果集，但是会消耗系统资源的，应改成这样： create table #t(…)``` 13、很多时候用 exists 代替 in 是一个好的选择：```bash select num from a where num in(select num from b) --用下面的语句替换： select num from a where exists(select 1 from b where num=a.num) 14、并不是所有索引对查询都有效，SQL是根据表中数据来进行查询优化的，当索引列有大量数据重复时，SQL查询可能不会去利用索引，如一表中有字段 sex，male、female几乎各一半，那么即使在sex上建了索引也对查询效率起不了作用。 15、索引并不是越多越好，索引固然可以提高相应的 select 的效率，但同时也降低了 insert 及 update 的效率，因为 insert 或 update 时有可能会重建索引，所以怎样建索引需要慎重考虑，视具体情况而定。一个表的索引数较好不要超过6个，若太多则应考虑一些不常使用到的列上建的索引是否有 必要。 16.应尽可能的避免更新 clustered 索引数据列，因为 clustered 索引数据列的顺序就是表记录的物理存储顺序，一旦该列值改变将导致整个表记录的顺序的调整，会耗费相当大的资源。若应用系统需要频繁更新 clustered 索引数据列，那么需要考虑是否应将该索引建为 clustered 索引。 17、尽量使用数字型字段，若只含数值信息的字段尽量不要设计为字符型，这会降低查询和连接的性能，并会增加存储开销。这是因为引擎在处理查询和连接时会 逐个比较字符串中每一个字符，而对于数字型而言只需要比较一次就够了。 18、尽可能的使用 varchar/nvarchar 代替 char/nchar ，因为首先变长字段存储空间小，可以节省存储空间，其次对于查询来说，在一个相对较小的字段内搜索效率显然要高些。 19、任何地方都不要使用 select from t ，用具体的字段列表代替“”，不要返回用不到的任何字段。 20、尽量使用表变量来代替临时表。如果表变量包含大量数据，请注意索引非常有限（只有主键索引）。 21、避免频繁创建和删除临时表，以减少系统表资源的消耗。 22、临时表并不是不可使用，适当地使用它们可以使某些例程更有效，例如，当需要重复引用大型表或常用表中的某个数据集时。但是，对于一次性事件，较好使 用导出表。 23、在新建临时表时，如果一次性插入数据量很大，那么可以使用 select into 代替 create table，避免造成大量 log ，以提高速度；如果数据量不大，为了缓和系统表的资源，应先create table，然后insert。 24、如果使用到了临时表，在存储过程的最后务必将所有的临时表显式删除，先 truncate table ，然后 drop table ，这样可以避免系统表的较长时间锁定。 25、尽量避免使用游标，因为游标的效率较差，如果游标操作的数据超过1万行，那么就应该考虑改写。 26、使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。 27、与临时表一样，游标并不是不可使用。对小型数据集使用 FAST_FORWARD 游标通常要优于其他逐行处理方法，尤其是在必须引用几个表才能获得所需的数据时。在结果集中包括“合计”的例程通常要比使用游标执行的速度快。如果开发时 间允许，基于游标的方法和基于集的方法都可以尝试一下，看哪一种方法的效果更好。 28、在所有的存储过程和触发器的开始处设置 SET NOCOUNT ON ，在结束时设置 SET NOCOUNT OFF 。无需在执行存储过程和触发器的每个语句后向客户端发送 DONEINPROC 消息。 29、尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理。 30、尽量避免大事务操作，提高系统并发能力。]]></content>
+      <categories>
+        <category>MySQL</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[CSS变量（自定义属性）]]></title>
+    <url>%2F2018%2F09%2F03%2Fcss-variables-(custom-properties)%2F</url>
+    <content type="text"><![CDATA[我们知道使用sass和less这样的预处理器可以让我们在css中使用变量等便利的特性。随着css新特性的不断增加，官方也提供了css变量供我们使用，叫做自定义属性，下面我们来看看怎么使用它。 变量的声明声明变量的时候，变量名前面要加两根连词线（–） :root { --foo: #EEEEEE; --bar: #FFFFFF; } 这样我们就在根节点声明了两个自定义的变量foo和bar :root { --Foo: #73A4F4; --foo: #EEEEEE; } 需要注意的是变量名的大小写是敏感的Foo和foo是两个不同的变量 变量的使用使用var()函数读取变量 a { color: var(--foo); text-decoration-color: var(--bar); } var()函数还可以使用第二个参数，表示变量的默认值。如果该变量不存在，就会使用这个默认值。 a { color: var(--foo, #7F583F); } 第二个参数不处理内部的逗号或空格，都视作参数的一部分。 var(--font-stack, "Roboto", "Helvetica"); var(--pad, 10px 15px 20px); var()函数还可以用在变量的声明。 :root { --primary-color: red; --logo-text: var(--primary-color); } 兼容性处理对于不支持 CSS 变量的浏览器，可以采用下面的写法。 a { color: #7F583F; color: var(--primary); } 也可以使用@support命令进行检测。 @supports ( (--a: 0)) { /* supported */ } @supports ( not (--a: 0)) { /* not supported */ } 参考链接CSS 变量教程Winning with CSS Variables]]></content>
+      <categories>
+        <category>CSS</category>
+      </categories>
+      <tags>
+        <tag>CSS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Centos6中无法通过Nginx访问资源文件]]></title>
+    <url>%2F2018%2F08%2F31%2Fcentos6-cannot-access-resource-files-through-nginx%2F</url>
+    <content type="text"><![CDATA[在谷歌云搞了个免费的服务器，搭建了一个wordpress结果css、js一直报404，一开始以为是nginx的启动用户和文件用户不一样，检查了一遍nginx.conf配置，将user nobody改成了user www，重启nginx发现还是404，网上各种搜索于是找到了这篇文章Nginx 因 Selinux 服务导致无法远程访问解决了我的问题。下面简单说说吧，其实还是不太理解。发现网站有资源文件404的话首先查看一下资源文件目录 发现权限后面都带了一个.那就说明这个文件是收保护的，再运行一下getenforce查看selinux的运行模式 12$ getenforceEnforcing 运行模式分为三种 enforcing (强制模式)、permissive（宽容模式）、disabled（关闭） 所以此时要解决这个问题有两种方法； 1.临时关闭 1$ setenforce 0 2.永久关闭，修改 /etc/selinux/config 文件（如下） 12345678910# This file controls the state of SELinux on the system.# SELINUX= can take one of these three values:# enforcing - SELinux security policy is enforced.# permissive - SELinux prints warnings instead of enforcing.# disabled - No SELinux policy is loaded.SELINUX=disabled# SELINUXTYPE= can take one of these two values:# targeted - Targeted processes are protected,# mls - Multi Level Security protection.SELINUXTYPE=targeted 重启电脑查看 Selinux 状态，应该为关闭状态 12$ getenforceDisabled 此时新建文件，查看文件权限后面也就没有带.了，静态资源也可以正常访问了]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>Nginx</tag>
+      </tags>
+  </entry>
+</search>

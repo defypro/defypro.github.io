@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>http://defypro.github.io/2018/09/03/css-variables-(custom-properties)/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/08/31/centos6-cannot-access-resource-files-through-nginx/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/10/26/git-ignores-local-files-that-have-passed-and-deletes-files-submitted-online/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/12/06/boolean-values-corresponding-to-various-types-of-values-in-js/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/12/12/js-singleton-(es6)/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/09/17/problems-with-js-converting-date-objects/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/09/05/installation-of-gitlab-in-linux-environment/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/09/03/mysql-query-statement-optimization-method-for-30-commonly-used-sql-queries/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/12/13/detailed-operating-principle-of-nginx+php-fpm/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/12/06/object.-defneproperty-simply-implements-bidirectional-binding-of-data/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/09/18/git-reset----file-loss-due-to-hard-misoperation/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/10/15/cross-domain-proxy-in-vue/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/09/11/vue-browser-returns-to-monitor/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/10/26/publish-your-own-npm-package/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2018/11/02/build-your-own-ngrok-intranet-penetration-service/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>  <url>
+    <loc>http://defypro.github.io/2019/05/20/analysis-of-vue-response-principle/</loc>
+    <lastmod>2019-05-22</lastmod>
+  </url>
+</urlset>
