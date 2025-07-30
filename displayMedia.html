@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <button id="startShareBtn">开始共享屏幕</button>
+  <button id="stopShareBtn" disabled>停止共享</button>
+  <video id="preview" autoplay muted></video>
+
+  <script>
+    const startBtn = document.getElementById('startShareBtn');
+    const stopBtn = document.getElementById('stopShareBtn');
+    const preview = document.getElementById('preview');
+    let screenStream = null;
+
+    startBtn.addEventListener('click', async () => {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false // 尝试改为 true 看是否支持音频
+        });
+        preview.srcObject = screenStream;
+        stopBtn.disabled = false;
+      } catch (error) {
+        console.error('共享失败:', error);
+      }
+    });
+
+    stopBtn.addEventListener('click', () => {
+      if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+        preview.srcObject = null;
+        stopBtn.disabled = true;
+      }
+    });
+  </script>
+</body>
+</html>
